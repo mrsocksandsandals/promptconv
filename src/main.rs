@@ -26,27 +26,33 @@
 */
 
 // Define constants
-const VERSION: &str = "0.1.0";
+const VERSION: &str = "0.1.1";
 
 // Import stuff
-use std::env::args;
+use structopt::StructOpt;
+
+// Arguments structure
+#[derive(Debug, StructOpt)]
+#[structopt(name = "promptconv", about = "A simple Bash > Zsh prompt converter.")]
+struct Args {
+    /// Bash prompt to convert
+    #[structopt(name = "prompt")]
+    prompt_string: String,
+
+    /// Disables evaluation of the 16 ANSI escape colours
+    #[structopt(long)]
+    disable_ansi: bool,
+}
 
 fn main() {
-    println!("promptconv v{}\nNOTE: This program will not automatically convert ANSI escape colours!\n", VERSION);
+    println!("promptconv v{}\nNOTE: This program will ONLY convert ANSI escape sequences in the prompt.\n", VERSION);
 
-    let prompt = match args().nth(1) {
-        // Check if a prompt was actually provided.
-        Some(prompt) => prompt,
-
-        None => {
-            printerr("You must provide a prompt!");
-            return;
-        }
-    };
+    let args = Args::from_args();
+    let prompt = &args.prompt_string;
     // Print back the Bash prompt.
     println!("Bash prompt: \"{}\"", prompt);
     // Convert to ZSH.
-    let zprompt = convert_prompt(prompt);
+    let zprompt = convert_prompt(prompt.to_string());
     println!("Zsh prompt:  \"{}\"", zprompt);
 }
 
@@ -54,7 +60,8 @@ fn convert_prompt(prompt: String) -> String {
     let chars: Vec<char> = prompt.chars().collect();
     let mut n_chars: Vec<char> = vec![];
     let mut escaping: bool = false;
-    for c in chars {
+    let mut i: usize = 0; // used to find the next char(s)
+    for c in &chars {
         match c {
             // Check if translating an escape.
             '\\' => {
@@ -139,23 +146,35 @@ fn convert_prompt(prompt: String) -> String {
                         }
 
                         _ => {
-                            // Just push the character.
+                            // Check if we are looking at an ANSI escape, aftering ensuring it is actually enabled.
+                            match &Args::from_args().disable_ansi {
+                                true => {
+                                    if chars[i + 1] == '0' {
+                                        // Maybe?
+                                        if chars[i + 2] == '3' && chars[i + 3] == '3' {
+                                            // Yes! Now, evaluate ANSI escape and convert to a colour.
+                                        }
+                                    }
+                                }
+
+                                false => {
+                                    // continue on to the next iteration
+                                    continue;
+                                }
+                            }
                             n_chars.push('\\');
-                            n_chars.push(c);
+                            n_chars.push(*c);
                         }
                     }
                     escaping = false; // Done.
                 } else {
-                    // Push the character literally.
-                    n_chars.push(c);
+                    // Push the character.
+                    n_chars.push(*c);
                 }
             }
         }
+        i += 1;
     }
     let n_prompt = n_chars.into_iter().collect();
     n_prompt
-}
-
-fn printerr(msg: &str) {
-    eprintln!("\x1b[1m\x1b[31merror: \x1b[0m{}", msg);
 }
