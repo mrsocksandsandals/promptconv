@@ -39,10 +39,6 @@ struct Args {
     #[structopt(name = "prompt")]
     prompt_string: String,
 
-    /// Disables evaluation of ANSI 16-colour escapes
-    #[structopt(long)]
-    disable_ansi: bool,
-
     /// Print less text, only printing the zsh prompt when done
     #[structopt(short, long)]
     quiet: bool,
@@ -169,7 +165,7 @@ fn convert_prompt(prompt: String) -> String {
                                 match c {
                                     'm' => {
                                         // end of sequence
-                                        if !(chars[i - 2] == '[' && chars[i - 1] == '0') {
+                                        if !(chars[i - 1] == '[' && chars[i] == '0') {
                                             n_chars.push('}');
                                         }
                                         ansi = false;
@@ -269,24 +265,13 @@ fn convert_prompt(prompt: String) -> String {
                                     }
                                 }
                             }
-                            match &Args::from_args().disable_ansi {
-                                false => {
-                                    if chars[i] == '0' {
-                                        // Maybe?
-                                        if chars[i + 1] == '3' && chars[i + 1] == '3' {
-                                            // Yes! Now, evaluate ANSI escape and convert to a colour.
-                                            n_chars.push('%');
-                                            ansi = true;
-                                        }
+                            if chars[i] == '0' {
+                                // Maybe?
+                                    if chars[i + 1] == '3' && chars[i + 1] == '3' {
+                                        // Yes! Now, evaluate ANSI escape and convert to a colour.
+                                        n_chars.push('%');
+                                        ansi = true;
                                     }
-                                }
-
-                                true => {
-                                    // continue on to the next iteration
-                                    n_chars.push('\\');
-                                    n_chars.push(*c);
-                                    continue;
-                                }
                             }
                         }
                     }
