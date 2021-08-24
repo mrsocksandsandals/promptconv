@@ -78,7 +78,7 @@ fn convert_prompt(prompt: String) -> String {
     let mut ansi: bool = false;
     let mut ansi_high: bool = false; // evaluating high ansi foreground (9x)
     let mut i: usize = 0; // used to find the next char(s)
-    for c in &chars {
+    'assemble_prompt: for c in &chars {
         match c {
             // Check if translating an escape.
             '\\' => {
@@ -169,7 +169,9 @@ fn convert_prompt(prompt: String) -> String {
                                 match c {
                                     'm' => {
                                         // end of sequence
-                                        n_chars.push('}');
+                                        if !(chars[i - 2] == '[' && chars[i - 1] == '0') {
+                                            n_chars.push('}');
+                                        }
                                         ansi = false;
                                     }
 
@@ -179,7 +181,13 @@ fn convert_prompt(prompt: String) -> String {
                                             i += 1;
                                             continue;
                                         } else {
-                                            // push
+                                            // check if the only char in escape. if so, then reset.
+                                            if chars[i - 1] == '[' && chars[i + 1] == 'm' {
+                                                n_chars.push('f');
+                                                for _i in 1..3 {
+                                                    continue 'assemble_prompt;
+                                                }
+                                            }
                                             n_chars.push(*c);
                                         }
                                     }
@@ -191,9 +199,11 @@ fn convert_prompt(prompt: String) -> String {
                                             continue;
                                         } else {
                                             if ansi_high == true {
-                                                n_chars.push('2');
+                                                n_chars.push('1');
+                                                n_chars.push('1');
+                                            } else {
+                                                n_chars.push(*c);
                                             }
-                                            n_chars.push(*c);
                                         }
                                     }
 
@@ -207,6 +217,8 @@ fn convert_prompt(prompt: String) -> String {
                                         if ansi_high == true {
                                             match c {
                                                 '1' => {
+                                                    n_chars.push('F');
+                                                    n_chars.push('{');
                                                     n_chars.push('9');
                                                 }
 
@@ -244,6 +256,12 @@ fn convert_prompt(prompt: String) -> String {
                                                     ansi_high = false;
                                                     if c != &'[' {
                                                         n_chars.push(*c);
+                                                    } else {
+                                                        // is '[', check if the escape is 0m or not (91m also has trouble check that here)
+                                                        if !(chars[i + 1] == '0' && chars[i + 2] == 'm') {
+                                                            n_chars.push('F');
+                                                            n_chars.push('{');
+                                                        }
                                                     }
                                                 }
                                             }
@@ -258,8 +276,6 @@ fn convert_prompt(prompt: String) -> String {
                                         if chars[i + 1] == '3' && chars[i + 1] == '3' {
                                             // Yes! Now, evaluate ANSI escape and convert to a colour.
                                             n_chars.push('%');
-                                            n_chars.push('F');
-                                            n_chars.push('{');
                                             ansi = true;
                                         }
                                     }
