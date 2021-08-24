@@ -5,7 +5,23 @@
 Just converts a `Bash` shell prompt to a `zsh` prompt.
 
 ### Usage
-`promptconv <string>` prints out the version with `zsh` escapes swapped in.
+```
+$ promptconv --help
+
+promptconv 0.1.1
+A simple Bash > Zsh prompt converter.
+
+USAGE:
+    promptconv [FLAGS] <prompt>
+
+FLAGS:
+    -h, --help       Prints help information
+    -q, --quiet      Print less text, only printing the zsh prompt when done
+    -V, --version    Prints version information
+
+ARGS:
+    <prompt>    Bash prompt to convert
+```
 
 ### Warnings
 This program cannot:
