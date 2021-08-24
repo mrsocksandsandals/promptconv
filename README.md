@@ -9,7 +9,6 @@ Just converts a `Bash` shell prompt to a `zsh` prompt.
 
 ### Warnings
 This program cannot:
-* Automatically convert ANSI escapes
 * Filter out Bash-specific escapes
 
 It is meant to convert most Bash escapes to Zsh escapes.
