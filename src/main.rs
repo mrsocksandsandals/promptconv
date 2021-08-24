@@ -42,21 +42,33 @@ struct Args {
     /// Disables evaluation of ANSI 16-colour escapes
     #[structopt(long)]
     disable_ansi: bool,
+
+    /// Print less text, only printing the zsh prompt when done
+    #[structopt(short, long)]
+    quiet: bool,
 }
 
 fn main() {
-    println!(
-        "promptconv v{}\nNOTE: This program will ONLY convert foreground ANSI colours.\n",
-        VERSION
-    );
 
     let args = Args::from_args();
     let prompt = &args.prompt_string;
+    if !args.quiet {
+        println!(
+            "promptconv v{}\nNOTE: This program will ONLY convert foreground ANSI colours.\n",
+            VERSION
+        );
+    }
     // Print back the Bash prompt.
-    println!("Bash prompt: \"{}\"", prompt);
+    if ! args.quiet {
+        println!("Bash prompt: \"{}\"", prompt);
+    }
     // Convert to ZSH.
     let zprompt = convert_prompt(prompt.to_string());
-    println!("Zsh prompt:  \"{}\"", zprompt);
+    if args.quiet {
+        println!("\"{}\"", zprompt)
+    } else {
+        println!("Zsh prompt:  \"{}\"", zprompt);
+    }
 }
 
 fn convert_prompt(prompt: String) -> String {
@@ -64,6 +76,7 @@ fn convert_prompt(prompt: String) -> String {
     let mut n_chars: Vec<char> = vec![];
     let mut escaping: bool = false;
     let mut ansi: bool = false;
+    let mut ansi_high: bool = false; // evaluating high ansi foreground (9x)
     let mut i: usize = 0; // used to find the next char(s)
     for c in &chars {
         match c {
@@ -163,6 +176,7 @@ fn convert_prompt(prompt: String) -> String {
                                     '0' => {
                                         if chars[i - 1] == '\\' {
                                             // part of escape
+                                            i += 1;
                                             continue;
                                         } else {
                                             // push
@@ -173,72 +187,75 @@ fn convert_prompt(prompt: String) -> String {
                                     '3' => {
                                         if chars[i - 1] == '0' || chars[i - 2] == '0' {
                                             // part of escape
+                                            i += 1;
                                             continue;
                                         } else {
+                                            if ansi_high == true {
+                                                n_chars.push('2');
+                                            }
                                             n_chars.push(*c);
                                         }
                                     }
 
                                     '9' => {
                                         // 9 can be somewhat bothersome, as it shifts away from the terminfo sequence
-                                        match chars[i + 1] {
-                                            '1' => {
-                                                if chars[i + 2] == 'm' {
-                                                    // it's red!
-                                                    n_chars.push('9');
-                                                    n_chars.push('}');
-                                                    ansi = false;
-                                                }
-                                            }
-
-                                            '2' => {
-                                                n_chars.push('1');
-                                                n_chars.push('0');
-                                            }
-
-                                            '3' => {
-                                                n_chars.push('1');
-                                                n_chars.push('1');
-                                            }
-
-                                            '4' => {
-                                                n_chars.push('1');
-                                                n_chars.push('2');
-                                            }
-
-                                            '5' => {
-                                                n_chars.push('1');
-                                                n_chars.push('3');
-                                            }
-
-                                            '6' => {
-                                                n_chars.push('1');
-                                                n_chars.push('4');
-                                            }
-
-                                            '7' => {
-                                                n_chars.push('1');
-                                                n_chars.push('5');
-                                            }
-
-                                            _ => {
-                                                // this isn't valid, but we push nonetheless
-                                                n_chars.push(*c);
-                                            }
-                                        }
+                                        ansi_high = true;
                                     }
 
                                     _ => {
-                                        // other characters - we don't handle these
-                                        n_chars.push(*c);
+                                        // work on high ansi colours, and also kill '['
+                                        if ansi_high == true {
+                                            match c {
+                                                '1' => {
+                                                    n_chars.push('9');
+                                                }
+
+                                                '2' => {
+                                                    n_chars.push('1');
+                                                    n_chars.push('0');
+                                                }
+
+                                                '3' => {
+                                                    n_chars.push('1');
+                                                    n_chars.push('1');
+                                                }
+
+                                                '4' => {
+                                                    n_chars.push('1');
+                                                    n_chars.push('2');
+                                                }
+
+                                                '5' => {
+                                                    n_chars.push('1');
+                                                    n_chars.push('3');
+                                                }
+
+                                                '6' => {
+                                                    n_chars.push('1');
+                                                    n_chars.push('4');
+                                                }
+
+                                                '7' => {
+                                                    n_chars.push('1');
+                                                    n_chars.push('5');
+                                                }
+
+                                                _ => {
+                                                    ansi_high = false;
+                                                    if c != &'[' {
+                                                        n_chars.push(*c);
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
                             match &Args::from_args().disable_ansi {
                                 false => {
-                                    if chars[i + 1] == '0' {
+                                    if chars[i] == '0' {
                                         // Maybe?
-                                        if chars[i + 2] == '3' && chars[i + 3] == '3' {
+                                        if chars[i + 1] == '3' && chars[i + 1] == '3' {
                                             // Yes! Now, evaluate ANSI escape and convert to a colour.
                                             n_chars.push('%');
                                             n_chars.push('F');
