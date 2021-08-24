@@ -39,13 +39,16 @@ struct Args {
     #[structopt(name = "prompt")]
     prompt_string: String,
 
-    /// Disables evaluation of the 16 ANSI escape colours
+    /// Disables evaluation of ANSI 16-colour escapes
     #[structopt(long)]
     disable_ansi: bool,
 }
 
 fn main() {
-    println!("promptconv v{}\nNOTE: This program will ONLY convert ANSI escape sequences in the prompt.\n", VERSION);
+    println!(
+        "promptconv v{}\nNOTE: This program will ONLY convert foreground ANSI colours.\n",
+        VERSION
+    );
 
     let args = Args::from_args();
     let prompt = &args.prompt_string;
@@ -60,6 +63,7 @@ fn convert_prompt(prompt: String) -> String {
     let chars: Vec<char> = prompt.chars().collect();
     let mut n_chars: Vec<char> = vec![];
     let mut escaping: bool = false;
+    let mut ansi: bool = false;
     let mut i: usize = 0; // used to find the next char(s)
     for c in &chars {
         match c {
@@ -147,26 +151,116 @@ fn convert_prompt(prompt: String) -> String {
 
                         _ => {
                             // Check if we are looking at an ANSI escape, aftering ensuring it is actually enabled.
+                            if ansi == true {
+                                // we are working on an ANSI escape.
+                                match c {
+                                    'm' => {
+                                        // end of sequence
+                                        n_chars.push('}');
+                                        ansi = false;
+                                    }
+
+                                    '0' => {
+                                        if chars[i - 1] == '\\' {
+                                            // part of escape
+                                            continue;
+                                        } else {
+                                            // push
+                                            n_chars.push(*c);
+                                        }
+                                    }
+
+                                    '3' => {
+                                        if chars[i - 1] == '0' || chars[i - 2] == '0' {
+                                            // part of escape
+                                            continue;
+                                        } else {
+                                            n_chars.push(*c);
+                                        }
+                                    }
+
+                                    '9' => {
+                                        // 9 can be somewhat bothersome, as it shifts away from the terminfo sequence
+                                        match chars[i + 1] {
+                                            '1' => {
+                                                if chars[i + 2] == 'm' {
+                                                    // it's red!
+                                                    n_chars.push('9');
+                                                    n_chars.push('}');
+                                                    ansi = false;
+                                                }
+                                            }
+
+                                            '2' => {
+                                                n_chars.push('1');
+                                                n_chars.push('0');
+                                            }
+
+                                            '3' => {
+                                                n_chars.push('1');
+                                                n_chars.push('1');
+                                            }
+
+                                            '4' => {
+                                                n_chars.push('1');
+                                                n_chars.push('2');
+                                            }
+
+                                            '5' => {
+                                                n_chars.push('1');
+                                                n_chars.push('3');
+                                            }
+
+                                            '6' => {
+                                                n_chars.push('1');
+                                                n_chars.push('4');
+                                            }
+
+                                            '7' => {
+                                                n_chars.push('1');
+                                                n_chars.push('5');
+                                            }
+
+                                            _ => {
+                                                // this isn't valid, but we push nonetheless
+                                                n_chars.push(*c);
+                                            }
+                                        }
+                                    }
+
+                                    _ => {
+                                        // other characters - we don't handle these
+                                        n_chars.push(*c);
+                                    }
+                                }
+                            }
                             match &Args::from_args().disable_ansi {
-                                true => {
+                                false => {
                                     if chars[i + 1] == '0' {
                                         // Maybe?
                                         if chars[i + 2] == '3' && chars[i + 3] == '3' {
                                             // Yes! Now, evaluate ANSI escape and convert to a colour.
+                                            n_chars.push('%');
+                                            n_chars.push('F');
+                                            n_chars.push('{');
+                                            ansi = true;
                                         }
                                     }
                                 }
 
-                                false => {
+                                true => {
                                     // continue on to the next iteration
+                                    n_chars.push('\\');
+                                    n_chars.push(*c);
                                     continue;
                                 }
                             }
-                            n_chars.push('\\');
-                            n_chars.push(*c);
                         }
                     }
-                    escaping = false; // Done.
+                    if !ansi {
+                        // make sure it doesn't end us early
+                        escaping = false; // Done.
+                    }
                 } else {
                     // Push the character.
                     n_chars.push(*c);
