@@ -179,31 +179,43 @@ pub fn convert_prompt(prompt: String) -> String {
                                                 }
 
                                                 '2' => {
+                                                    n_chars.push('F');
+                                                    n_chars.push('{');
                                                     n_chars.push('1');
                                                     n_chars.push('0');
                                                 }
 
                                                 '3' => {
+                                                    n_chars.push('F');
+                                                    n_chars.push('{');
                                                     n_chars.push('1');
                                                     n_chars.push('1');
                                                 }
 
                                                 '4' => {
+                                                    n_chars.push('F');
+                                                    n_chars.push('{');
                                                     n_chars.push('1');
                                                     n_chars.push('2');
                                                 }
 
                                                 '5' => {
+                                                    n_chars.push('F');
+                                                    n_chars.push('{');
                                                     n_chars.push('1');
                                                     n_chars.push('3');
                                                 }
 
                                                 '6' => {
+                                                    n_chars.push('F');
+                                                    n_chars.push('{');
                                                     n_chars.push('1');
                                                     n_chars.push('4');
                                                 }
 
                                                 '7' => {
+                                                    n_chars.push('F');
+                                                    n_chars.push('{');
                                                     n_chars.push('1');
                                                     n_chars.push('5');
                                                 }
@@ -212,12 +224,6 @@ pub fn convert_prompt(prompt: String) -> String {
                                                     ansi_high = false;
                                                     if c != &'[' {
                                                         n_chars.push(*c);
-                                                    } else {
-                                                        // is '[', check if the escape is 0m or not (91m also has trouble check that here)
-                                                        if !(chars[i + 1] == '0' && chars[i + 2] == 'm') {
-                                                            n_chars.push('F');
-                                                            n_chars.push('{');
-                                                        }
                                                     }
                                                 }
                                             }
@@ -249,4 +255,38 @@ pub fn convert_prompt(prompt: String) -> String {
     }
     let n_prompt = n_chars.into_iter().collect();
     n_prompt
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::*;
+
+    // Library unit tests
+    #[test]
+    fn convert_default_redhat() {
+        let test_prompt = String::from("[\\u@\\h \\W]\\$ ");
+        let new_prompt = convert_prompt(test_prompt);
+        assert_eq!(new_prompt, String::from("[%n@%m %1~]%(#.#.$) "));
+    }
+
+    #[test]
+    fn convert_colourful_redhat() {
+        let test_prompt = String::from("\\033[92m[\\u@\\033[94m\\h \\W\\033[92m]\\$ \\033[0m");
+        let new_prompt = convert_prompt(test_prompt);
+        assert_eq!(new_prompt, String::from("%F{10}[%n@%F{12}%m %1~%F{10}]%(#.#.$) %f"));
+    }
+
+    #[test]
+    fn convert_gentoo_root() {
+        let test_prompt = String::from("\\033[91m\\h \\033[94m\\w \\$ \\033[0m");
+        let new_prompt = convert_prompt(test_prompt);
+        assert_eq!(new_prompt, String::from("%F{9}%m %F{12}%~ %(#.#.$) %f"));
+    }
+
+    #[test]
+    fn convert_gentoo_user() {
+        let test_prompt = String::from("\\033[92m\\u@\\h \\033[94m\\w \\$ \\033[0m");
+        let new_prompt = convert_prompt(test_prompt);
+        assert_eq!(new_prompt, String::from("%F{10}%n@%m %F{12}%~ %(#.#.$) %f"));
+    }
 }
