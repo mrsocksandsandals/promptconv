@@ -233,11 +233,11 @@ pub fn convert_prompt(prompt: String) -> String {
                             }
                             if chars[i] == '0' {
                                 // Maybe?
-                                    if chars[i + 1] == '3' && chars[i + 1] == '3' {
-                                        // Yes! Now, evaluate ANSI escape and convert to a colour.
-                                        n_chars.push('%');
-                                        ansi = true;
-                                    }
+                                if chars[i + 1] == '3' && chars[i + 1] == '3' {
+                                    // Yes! Now, evaluate ANSI escape and convert to a colour.
+                                    n_chars.push('%');
+                                    ansi = true;
+                                }
                             }
                         }
                     }
@@ -273,7 +273,10 @@ mod tests {
     fn convert_colourful_redhat() {
         let test_prompt = String::from("\\033[92m[\\u@\\033[94m\\h \\W\\033[92m]\\$ \\033[0m");
         let new_prompt = convert_prompt(test_prompt);
-        assert_eq!(new_prompt, String::from("%F{10}[%n@%F{12}%m %1~%F{10}]%(#.#.$) %f"));
+        assert_eq!(
+            new_prompt,
+            String::from("%F{10}[%n@%F{12}%m %1~%F{10}]%(#.#.$) %f")
+        );
     }
 
     #[test]

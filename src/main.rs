@@ -52,7 +52,7 @@ fn main() {
         );
     }
     // Print back the Bash prompt.
-    if ! args.quiet {
+    if !args.quiet {
         println!("Bash prompt: \"{}\"", prompt);
     }
     // Convert to ZSH.
