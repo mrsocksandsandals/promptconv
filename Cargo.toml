@@ -3,6 +3,16 @@ name = "promptconv"
 version = "0.1.3"
 edition = "2018"
 
+# For publishing
+authors = ["Brett I. <notronaldmcdonald>"]
+description = "A simple Bash > Zsh prompt converter"
+readme = "README.md"
+homepage = "https://github.com/notronaldmcdonald/promptconv"
+repository = "https://github.com/notronaldmcdonald/promptconv"
+license = "MIT"
+keywords = ["cli", "shell"]
+categories = ["command-line-utilities"]
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
