@@ -2,7 +2,7 @@
 /* promptconv - A simple tool to convert bash prompts to zsh. */
 /* ---------------------------------------------------------- */
 
-pub const VERSION: &str = "0.1.2";
+pub const VERSION: &str = "0.1.3";
 
 /* MIT License
  *
