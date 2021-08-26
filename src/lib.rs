@@ -144,7 +144,13 @@ pub fn convert_prompt(prompt: String) -> String {
                                                     continue 'assemble_prompt;
                                                 }
                                             }
-                                            n_chars.push(*c);
+                                            n_chars.push('F');
+                                            n_chars.push('{');
+                                            if ansi_high {
+                                                n_chars.push('8');
+                                            } else {
+                                                n_chars.push(*c);
+                                            }
                                         }
                                     }
 
@@ -155,10 +161,17 @@ pub fn convert_prompt(prompt: String) -> String {
                                             continue;
                                         } else {
                                             if ansi_high == true {
+                                                n_chars.push('F');
+                                                n_chars.push('{');
                                                 n_chars.push('1');
                                                 n_chars.push('1');
-                                            } else {
-                                                n_chars.push(*c);
+                                            } else if chars[i + 1] == 'm' {
+                                                n_chars.push('F');
+                                                n_chars.push('{');
+                                                n_chars.push('3');
+                                                println!("created brown!");
+                                                i += 1;
+                                                continue;
                                             }
                                         }
                                     }
@@ -170,7 +183,7 @@ pub fn convert_prompt(prompt: String) -> String {
 
                                     _ => {
                                         // work on high ansi colours, and also kill '['
-                                        if ansi_high == true {
+                                        if ansi_high {
                                             match c {
                                                 '1' => {
                                                     n_chars.push('F');
@@ -226,6 +239,16 @@ pub fn convert_prompt(prompt: String) -> String {
                                                         n_chars.push(*c);
                                                     }
                                                 }
+                                            }
+                                        } else if !ansi_high {
+                                            if c == &'[' {
+                                                i += 1;
+                                                continue;
+                                            } else {
+                                                n_chars.push('F');
+                                                n_chars.push('{');
+                                                println!("pushing char {}", chars[i]);
+                                                n_chars.push(*c);
                                             }
                                         }
                                     }
