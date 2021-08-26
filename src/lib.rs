@@ -2,7 +2,7 @@
 /* promptconv - A simple tool to convert bash prompts to zsh. */
 /* ---------------------------------------------------------- */
 
-pub const VERSION: &str = "0.1.2";
+pub const VERSION: &str = "0.1.3";
 
 /* MIT License
  *
@@ -318,11 +318,21 @@ mod tests {
 
     #[test]
     fn colors() {
-        let test_prompt = String::from("\\033[30m\\033[31m\\033[32m\\033[33m\\033[34m\\033[35m\\033[36m\\033[37m\\033[0m");
+        let test_prompt = String::from(
+            "\\033[30m\\033[31m\\033[32m\\033[33m\\033[34m\\033[35m\\033[36m\\033[37m\\033[0m",
+        );
         let new_prompt = convert_prompt(test_prompt);
-        assert_eq!(new_prompt, String::from("%F{0}%F{1}%F{2}%F{3}%F{4}%F{5}%F{6}%F{7}%f"));
-        let test_prompt = String::from("\\033[90m\\033[91m\\033[92m\\033[93m\\033[94m\\033[95m\\033[96m\\033[97m\\033[0m");
+        assert_eq!(
+            new_prompt,
+            String::from("%F{0}%F{1}%F{2}%F{3}%F{4}%F{5}%F{6}%F{7}%f")
+        );
+        let test_prompt = String::from(
+            "\\033[90m\\033[91m\\033[92m\\033[93m\\033[94m\\033[95m\\033[96m\\033[97m\\033[0m",
+        );
         let new_prompt = convert_prompt(test_prompt);
-        assert_eq!(new_prompt, String::from("%F{8}%F{9}%F{10}%F{11}%F{12}%F{13}%F{14}%F{15}%f"));
+        assert_eq!(
+            new_prompt,
+            String::from("%F{8}%F{9}%F{10}%F{11}%F{12}%F{13}%F{14}%F{15}%f")
+        );
     }
 }
