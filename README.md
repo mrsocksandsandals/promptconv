@@ -35,4 +35,4 @@ If you're interested, you can install `promptconv` through one of the following 
 * Cargo (`cargo install promptconv`)
 
 <h3 align="center">Additional Links</h3>
-<h6 align="center"><a href="./LICENSE">License</a> | <a href="https://github.com/notronaldmcdonald/promptconv/releases">Releases</a></h6>
+<h6 align="center"><a href="./LICENSE">License</a> | <a href="https://github.com/notronaldmcdonald/promptconv/releases">Releases</a> | <a href="https://crates.io/crates/promptconv">crates.io</a></h6>
